@@ -276,6 +276,14 @@ func (app *App) makeServer(addr string, handler *http.Handler) (*http.Server, er
 func (app *App) handleWS(w http.ResponseWriter, r *http.Request) {
 	log.Printf("New client connected: %s", r.RemoteAddr)
 
+	rootDir := ""
+	queryForm, err := url.ParseQuery(r.URL.RawQuery)
+	if err == nil && len(queryForm["data"]) > 0 {
+	    rootDir = queryForm["data"][0]
+	}
+
+	
+
 	if r.Method != "GET" {
 		http.Error(w, "Method not allowed", 405)
 		return
@@ -336,7 +344,11 @@ func (app *App) handleWS(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	cmd := exec.Command(app.command[0], argv...)
+	log.Println(rootDir)
+    
+	//cmd := exec.Command(app.command[0], argv...)
+	preCmdStr := app.command[0] +" " + strings.Join(argv, " ")
+    cmd := exec.Command("sh", "./chpwd.sh", rootDir, preCmdStr)
 	ptyIo, err := pty.Start(cmd)
 	if err != nil {
 		log.Print("Failed to execute command")
